@@ -359,12 +359,12 @@
 (setq interpreter-mode-alist (append '(("ruby" . ruby-mode))
 				     interpreter-mode-alist))
  
-(add-hook 'ruby-mode (lambda () 
-		       (progn			 
-			 (define-key ruby-mode-map "\C-c\C-c" 'ruby-eval-buffer)
-			 (define-key ruby-mode-map " " 'ruby-electric-space)
-			 (define-key ruby-mode-map "\r" 'ruby-electric-ret)
-			 (define-key ruby-mode-map "\C-c\C-w" 'ruby-deploy-server))))
+(add-hook 'ruby-mode-hook (lambda () 
+			    (progn			 
+			      (define-key ruby-mode-map "\C-c\C-c" 'ruby-eval-buffer)
+			      (define-key ruby-mode-map " " 'ruby-electric-space)
+			      (define-key ruby-mode-map "\r" 'ruby-electric-ret)
+			      (define-key ruby-mode-map "\C-c\C-w" 'ruby-deploy-server))))
 ;; (define-key ruby-mode-map [C-up] 'ruby-backward-sexp)
 ;; (define-key ruby-mode-map [C-down] 'ruby-forward-sexp)
 
