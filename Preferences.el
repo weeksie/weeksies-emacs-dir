@@ -31,9 +31,10 @@
 (setq save-abbrevs t)
 
 ;;;; IDO mode for textmate style fuzzy matching
-(require 'ido)
+;(require 'ido)
 (ido-mode t)
 (setq ido-enable-flex-matching t)
+;(process-adaptive-read-buffering t) ; uncomment if ido gets sluggish again
 
 ;;;; YASnippets
 (add-to-list 'load-path "~/Library/Preferences/Aquamacs Emacs/yasnippet")
@@ -183,6 +184,10 @@
 
 
 
+;;;; GO MODE
+(add-to-list 'load-path "~/Library/Preferences/Aquamacs Emacs/go-mode-load.el" t)
+(require 'go-mode-load)
+
 ;;;;C MODE
 (require 'cc-mode)
 
@@ -284,7 +289,7 @@
 
 (defun ruby-eval-buffer () (interactive)
    "Evaluate the buffer with ruby."
-   (shell-command-on-region (point-min) (point-max) "/usr/bin/ruby -W0"))
+   (shell-command-on-region (point-min) (point-max) "ruby -W0"))
 
 (defun ruby-electric-space (arg)
   (interactive "P")
@@ -341,10 +346,10 @@
 ;; (define-key ruby-mode-map [C-down] 'ruby-forward-sexp)
 
 
-;; RINARI (Rails mode)
-(add-to-list 'load-path "~/Library/Preferences/Aquamacs Emacs/rinari")
-(require 'rinari)
-(define-key rinari-minor-mode-map "\C-c\C-t" 'rinari-test)
+;; ;; RINARI (Rails mode)
+;; (add-to-list 'load-path "~/Library/Preferences/Aquamacs Emacs/rinari")
+;; (require 'rinari)
+;; (define-key rinari-minor-mode-map "\C-c\C-t" 'rinari-test)
 
 
 
@@ -551,6 +556,9 @@
 
 (setq auto-mode-alist
       (append '(("\\.js$" . js2-mode)) auto-mode-alist))
+
+
+(setq js2-bounce-indent-p nil)
 
 ;; ;; (add-hook 'javascript-mode-hook
 ;; ;;           '(lambda () 
@@ -780,7 +788,10 @@
 
 (require 'haml-mode)
 (require 'sass-mode)
-
+(defun haml-indent-region()
+  (interactive)
+  (haml-reindent-region-by 1))
+   
 ;; Blogging
 
 (defun post-to-blog ()
