@@ -31,16 +31,19 @@
 (setq save-abbrevs t)
 
 ;;;; IDO mode for textmate style fuzzy matching
-;(require 'ido)
+;(setq confirm-nonexistent-file-or-buffer 'after-completion)
+(require 'ido)
 (ido-mode t)
 (setq ido-enable-flex-matching t)
-;(process-adaptive-read-buffering t) ; uncomment if ido gets sluggish again
+(process-adaptive-read-buffering t) ; uncomment if ido gets sluggish again
 
-;;;; YASnippets
-(add-to-list 'load-path "~/Library/Preferences/Aquamacs Emacs/yasnippet")
-(require 'yasnippet)
-(yas/load-directory "~/Library/Preferences/Aquamacs Emacs/yasnippet/snippets")
-(setq yas/trigger-key (kbd "<C-M-return>"))
+
+
+;; ;;;; YASnippets
+;; (add-to-list 'load-path "~/Library/Preferences/Aquamacs Emacs/yasnippet")
+;; (require 'yasnippet)
+;; (yas/load-directory "~/Library/Preferences/Aquamacs Emacs/yasnippet/snippets")
+;; (setq yas/trigger-key (kbd "<C-M-return>"))
 
 
 ;;;;LAYOUT
@@ -58,6 +61,10 @@
 (set-frame-size (selected-frame) 205 75)
 (enlarge-window 20)
 (setq indent-tabs-mode nil)
+
+(require 'linum)
+(setq linum-format "%d ")
+(global-linum-mode)
 
 ;;;;; AQUAMACS SPECIFIC SETTINGS
 (setq browse-url-browser-function 'browse-url-safari)
@@ -88,19 +95,20 @@
 
 
 ;;;; PHP MODE
-(require 'php-mode)
+(autoload 'php-mode "php-mode" nil t)
 
- 
+
+(autoload 'go-mode-load "go-mode-load" nil t)
 
 ;;;; CMAKE MODE
-(require 'cmake-mode)
+(autoload 'cmake-mode "cmake-mode" nil t)
 (setq auto-mode-alist
       (append '(("CMakeLists\\.txt" . cmake-mode)
 		("\\.cmake$" . cmake-mode)) 
 	      auto-mode-alist))
 
 ;;;; LATEX MODE
-(require 'latex)
+(autoload 'latex-mode "latex" nil t)
 (defun latex-para ()
   (interactive)
   (progn
@@ -138,13 +146,19 @@
       
     
 
-(add-hook 'LaTeX-mode-hook 'flyspell-mode)
-(put 'LaTeX-mode 'flyspell-mode-predicate 'tex-mode-flyspell)
-
-(define-key LaTeX-mode-map (kbd "C-<return>") 'latex-para)
-(define-key LaTeX-mode-map "\C-c\C-c" 'latex-compile-and-load)
-(define-key LaTeX-mode-map "\M-o" 'latex-insert-circumflect-o)
 ;(define-key LaTeX-mode-map " " 'latex-insert-full-stop)
+(add-hook 'LaTeX-mode-hook
+	  '(lambda ()
+	    (flyspell-mode)
+	    (put 'LaTeX-mode 'flyspell-mode-predicate 'tex-mode-flyspell)
+	    (define-key LaTeX-mode-map (kbd "C-<return>") 'latex-para)
+	    (define-key LaTeX-mode-map "\C-c\C-c" 'latex-compile-and-load)
+	    (define-key LaTeX-mode-map "\M-o" 'latex-insert-circumflect-o)))
+
+	    
+	      
+
+
 
 ;;;; ANGEFTP
 (setq ange-ftp-ftp-program-name "nftp.pl")
@@ -176,7 +190,7 @@
 
 
 ;;;; YAML MODE
-(require 'yaml-mode)
+(autoload 'yaml-mode "yaml-mode" nil t)
 (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
 (add-hook 'yaml-mode-hook
 	  '(lambda ()
@@ -189,7 +203,7 @@
 (require 'go-mode-load)
 
 ;;;;C MODE
-(require 'cc-mode)
+(autoload 'cc-mode "cc-mode" nil t)
 
 (defun c-compile-current-buffer ()
   (interactive)
@@ -207,10 +221,12 @@
   (shell-command 
    "export PATH=$PATH:/usr/local/bin;ruby extconf.rb && make clean && make"))
 
-
-(define-key c-mode-map "\C-c\C-c" 'c-compile-current-buffer)
-(define-key c-mode-map "\r" 'c-electric-ret)
-(define-key c-mode-map "\C-c\C-r" 'c-ruby-ext-compile)
+(add-hook 'c-mode-hook
+	  (lambda ()
+	    (progn	      
+	      (define-key c-mode-map "\C-c\C-c" 'c-compile-current-buffer)
+	      (define-key c-mode-map "\r" 'c-electric-ret)
+	      (define-key c-mode-map "\C-c\C-r" 'c-ruby-ext-compile))))
 
 ;;;; FANCY CHARS MIGHT NOT WORK WITH PROFONT
 (defun unicode-symbol (name)
@@ -282,7 +298,11 @@
 
 ;;;;RUBY MODE
 ;; (add-to-list 'load-path "~/.emacs-modes")
-(require 'ruby-mode)
+(autoload 'ruby-mode "ruby-mode" nil t)
+(autoload 'inf-ruby "ruby-mode" nil t)
+(setq ri-ruby-script "~/Library/Preferences/Aquamacs Emacs/ri-emacs.rb")
+(autoload 'ri "~/Library/Preferences/Aquamacs Emacs/ri-ruby.el" nil t)
+
 (add-hook 'ruby-mode-user-hook 'turn-on-font-lock)
 (add-hook 'ruby-mode-hook 'pair-mode)
 (add-hook 'ruby-mode-hook 'yas/minor-mode-on)
@@ -335,26 +355,40 @@
 (setq auto-mode-alist
       (append '(("Rakefile$" . ruby-mode)) auto-mode-alist))
 
+(setq auto-mode-alist
+      (append '(("Gemfile$" . ruby-mode)) auto-mode-alist))
+
+(setq auto-mode-alist
+      (append '(("\\.rake$" . ruby-mode)) auto-mode-alist))
+
 (setq interpreter-mode-alist (append '(("ruby" . ruby-mode))
 				     interpreter-mode-alist))
  
-(define-key ruby-mode-map "\C-c\C-c" 'ruby-eval-buffer)
-(define-key ruby-mode-map " " 'ruby-electric-space)
-(define-key ruby-mode-map "\r" 'ruby-electric-ret)
-(define-key ruby-mode-map "\C-c\C-w" 'ruby-deploy-server)
+(add-hook 'ruby-mode-hook (lambda () 
+			    (progn			 
+			      (define-key ruby-mode-map "\C-c\C-c" 'ruby-eval-buffer)
+			      (define-key ruby-mode-map " " 'ruby-electric-space)
+			      (define-key ruby-mode-map "\r" 'ruby-electric-ret)
+			      (define-key ruby-mode-map "\C-c\C-w" 'ruby-deploy-server))))
 ;; (define-key ruby-mode-map [C-up] 'ruby-backward-sexp)
 ;; (define-key ruby-mode-map [C-down] 'ruby-forward-sexp)
 
 
-;; ;; RINARI (Rails mode)
+;; RINARI (Rails mode)
 ;; (add-to-list 'load-path "~/Library/Preferences/Aquamacs Emacs/rinari")
+;; (add-to-list 'load-path "~/Library/Preferences/Aquamacs Emacs/rinari/jump")
 ;; (require 'rinari)
 ;; (define-key rinari-minor-mode-map "\C-c\C-t" 'rinari-test)
 
 
+;; CUCUMBER (testing)
+
+(autoload 'feature-mode "feature-mode" nil t)
+(add-to-list 'auto-mode-alist '("\.feature$" . feature-mode))
+
 
 ;;;; REDCLOTH
-(require 'textile-mode)
+(autoload 'textile-mode "textile-mode" nil t)
 (setq auto-mode-alist
       (append '(("\\.blog" . textile-mode)) auto-mode-alist))
 (setq auto-mode-alist
@@ -362,8 +396,11 @@
 (setq auto-mode-alist
       (append '(("\\.textile" . textile-mode)) auto-mode-alist))
 
-(define-key textile-mode-map "\C-c\C-c" 'blog-preview)
-(add-hook 'textile-mode-hook 'flyspell-mode)
+
+(add-hook 'textile-mode-hook (lambda ()
+			       (progn 
+				 (flyspell-mode)	
+				 (define-key textile-mode-map "\C-c\C-c" 'blog-preview))))			 
 
 ;;;; MARKDOWN
 (autoload 'markdown-mode "markdown-mode.el"
@@ -437,7 +474,7 @@
 
 
 ;; ;;;; ERLANG MODE
-(require 'erlang)
+(autoload 'erlang-mode "erlang" nil t)
 (setq auto-mode-alist
       (append '(("\\.erl$" . erlang-mode)) auto-mode-alist))
 (setq inferior-erlang-machine "/usr/local/bin/erl")
@@ -473,25 +510,27 @@
 ;;   (interactive)
 ;;   (run-rake "erl:test"))
 
-(erlang-keymap-init)
 
-(setq erlang-root-dir "/usr/local/lib/erlang")
-(define-key erlang-mode-map (kbd "C--") 'erlang-emit-arrow)
-(define-key erlang-mode-map (kbd "C-M--") 'erlang-fill-comment)
-(define-key erlang-mode-map (kbd "M--") 'comment-region)
-(define-key erlang-mode-map (kbd "M-_") 'uncomment-region)
-(define-key erlang-mode-map (kbd "<return>") 'erlang-return-indent)
+(add-hook 'erlang-mode-hook (lambda ()
+			      (progn				
+				(erlang-keymap-init)
+				(setq erlang-root-dir "/usr/local/lib/erlang")
+				(define-key erlang-mode-map (kbd "C--") 'erlang-emit-arrow)
+				(define-key erlang-mode-map (kbd "C-M--") 'erlang-fill-comment)
+				(define-key erlang-mode-map (kbd "M--") 'comment-region)
+				(define-key erlang-mode-map (kbd "M-_") 'uncomment-region)
+				(define-key erlang-mode-map (kbd "<return>") 'erlang-return-indent))))
 
 
 ;;;; Actionscript mode
-(require 'actionscript-mode)
+(autoload 'actionscript-mode "actionscript-mode" nil t)
 (setq auto-mode-alist
       (append '(("\\.as$" . actionscript-mode)) auto-mode-alist))
 
 
 
 ;;;; LUA MODE
-(require 'lua-mode)
+(autoload 'lua-mode "lua-mode" nil t)
 (setq auto-mode-alist
       (append '(("\\.lua$" . lua-mode)) auto-mode-alist))
 
@@ -587,43 +626,9 @@
 ;; (define-key javascript-mode-map "\C-l\C-l" 'js-emit-load-fun)
 
 
-;; ;;;;SQL MODE
-;; (require 'sql)
-;; (defun sql-electric-ret ()
-;;   (interactive)
-;;   (progn
-;;     (newline)
-;;     (indent-according-to-mode)))
-
-
-;; (defun sql-integer-not-null ()
-;;   (interactive)
-;;   (progn
-;;     (princ " INTEGER NOT NULL" (current-buffer))
-;;     (sql-electric-ret)
-;;     (princ ", " (current-buffer))))
-
-;; (defun sql-create-table ()
-;;   (interactive)
-;;   (progn
-;;     (princ "CREATE TABLE " (current-buffer))
-;;     (save-excursion 
-;;       (princ " (" (current-buffer))
-;;       (newline)
-;;       (princ ");" (current-buffer)))))
-
-;; (defun sql-insert-utf8 ()
-;;   (interactive)
-;;   (princ " CHARACTER SET utf8" (current-buffer)))
-
-;; (define-key sql-mode-map "\r" 'sql-electric-ret)
-;; (define-key sql-mode-map "\C-n\C-n" 'sql-integer-not-null)
-;; (define-key sql-mode-map "\C-u\C-u" 'sql-insert-utf8)
-;; (define-key sql-mode-map "\C-c-k" 'sql-create-table)
-
 
 ;;;; SGML/XML/HTML/RHTML MODE
-(require 'sgml-mode)
+(autoload 'sgml-mode "sgml-mode" nil t)
 (setq auto-mode-alist
       (append '(("\\.rhtml" . sgml)) auto-mode-alist))
 (setq auto-mode-alist
@@ -637,8 +642,8 @@
 
 
 (add-hook 'sgml-mode-hook
-          (lambda ()
-	    (setq word-wrap nil)))
+          '(lambda ()
+	     (setq word-wrap nil)))
 
 (defun sgml-preprocessor-tag ()
   (interactive)
@@ -730,16 +735,17 @@
     (forward-char location)
     (looking-at char)))
 
-
-(define-key sgml-mode-map (kbd "C-x C-l i") (lambda () (interactive) (sgml-surround "li")))
-(define-key sgml-mode-map ">" 'sgml-electric-close-tag)
-(define-key sgml-mode-map "/" 'sgml-electric-complete)
-(define-key sgml-mode-map "\r" 'sgml-electric-indent-line)
-(define-key sgml-mode-map (kbd "C-M--") 'sgml-fill-comment)
-(define-key sgml-mode-map (kbd "C-<return>") 'sgml-electric-br)
-(define-key sgml-mode-map (kbd "C-c C-c") 'sgml-clear-div)
-(define-key sgml-mode-map (kbd "C-c C-q") 'sgml-preprocessor-tag)
-(define-key sgml-mode-map (kbd "C-c m") 'sgml-php-msg)
+(add-hook 'sgml-mode-hook '(lambda ()
+			    (progn
+			      (define-key sgml-mode-map (kbd "C-x C-l i") (lambda () (interactive) (sgml-surround "li")))
+			      (define-key sgml-mode-map ">" 'sgml-electric-close-tag)
+			      (define-key sgml-mode-map "/" 'sgml-electric-complete)
+			      (define-key sgml-mode-map "\r" 'sgml-electric-indent-line)
+			      (define-key sgml-mode-map (kbd "C-M--") 'sgml-fill-comment)
+			      (define-key sgml-mode-map (kbd "C-<return>") 'sgml-electric-br)
+			      (define-key sgml-mode-map (kbd "C-c C-c") 'sgml-clear-div)
+			      (define-key sgml-mode-map (kbd "C-c C-q") 'sgml-preprocessor-tag)
+			      (define-key sgml-mode-map (kbd "C-c m") 'sgml-php-msg))))
 
 
 (add-to-list 'load-path "~/Library/Preferences/Aquamacs Emacs/mmm-mode")
@@ -764,9 +770,9 @@
              (?= erb-expression nil @ "<%=" @ " " _ " " @ "%>" @))
     )))
 (add-hook 'html-mode-hook
-          (lambda ()
-            (setq mmm-classes '(erb-code))
-            (mmm-mode-on)))
+          '(lambda ()
+	     (setq mmm-classes '(erb-code))
+	     (mmm-mode-on)))
 
 ;; What files to invoke the new html-mode for?
 (add-to-list 'auto-mode-alist '("\\.inc\\'" . html-mode))
@@ -786,12 +792,12 @@
 
 ;; HAML / SASS
 
-(require 'haml-mode)
-(require 'sass-mode)
 (defun haml-indent-region()
   (interactive)
   (haml-reindent-region-by 1))
    
+(autoload 'haml-mode "haml-mode" nil t)
+(autoload 'sass-mode "sass-mode" nil t)
 ;; Blogging
 
 (defun post-to-blog ()
@@ -942,11 +948,15 @@ wrap-region-or-insert using left and right."
 (defun snepo-surround (x y)
   (interactive)
   (if (and mark-active transient-mark-mode)
-      (save-excursion
+      (progn
+	(save-excursion
 	(goto-char (region-beginning))
 	(insert x)
-	(goto-char (+ (region-end) (length y)))
-	(if (looking-at "\n") (forward-char -1))
+	;; (goto-char
+	;;  (+ (region-end) (length x)))
+;;	(if (looking-at "\n") (forward-char -1))
+	)
+	(goto-char (region-end))
 	(insert y))
     (princ x (current-buffer))
     (unless (or (looking-at y) (looking-at "\\w"))
@@ -1072,17 +1082,6 @@ LIST defaults to all existing live buffers."
 (global-set-key "\C-x\C-k" 'kill-region)
 (global-set-key "\C-c\C-k" 'kill-region)
 
-;; pair mode does this, y'know
-;; (global-set-key "[" 'snepo-electric-bracket)
-;; (global-set-key "]" 'snepo-electric-close-bracket)
-;; (global-set-key "{" 'snepo-electric-brace)
-;; (global-set-key "}" 'snepo-electric-close-brace)
-;; (global-set-key "(" 'snepo-electric-paren)
-;; (global-set-key ")" 'snepo-electric-close-paren)
-;; (global-set-key "\"" 'snepo-electric-quote)
-;; ;(global-set-key "'" 'snepo-electric-prime)
-;; (global-set-key [backspace] 'snepo-electric-delete)
-
 (global-set-key "\C-x\C-a" 'align-regexp)
 
 
@@ -1108,6 +1107,16 @@ LIST defaults to all existing live buffers."
 
 
 
+;; pair mode does this, y'know
+;; (global-set-key "[" 'snepo-electric-bracket)
+;; (global-set-key "]" 'snepo-electric-close-bracket)
+;; (global-set-key "{" 'snepo-electric-brace)
+;; (global-set-key "}" 'snepo-electric-close-brace)
+;; (global-set-key "(" 'snepo-electric-paren)
+;; (global-set-key ")" 'snepo-electric-close-paren)
+(global-set-key "\"" 'snepo-electric-quote)
+;; ;(global-set-key "'" 'snepo-electric-prime)
+;; (global-set-key [backspace] 'snepo-electric-delete)
 
 
 ;;;; temp functions
