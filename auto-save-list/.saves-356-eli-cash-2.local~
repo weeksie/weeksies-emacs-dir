@@ -1,0 +1,10 @@
+/Users/weeksie/Library/PostgresData/postgresql.conf
+/Users/weeksie/Library/PostgresData/#postgresql.conf#
+/Users/weeksie/Library/PostgresData/pg_hba.conf
+/Users/weeksie/Library/PostgresData/#pg_hba.conf#
+/Users/weeksie/Workspace/heyfoxy.com/config/database.mongo.yml
+/Users/weeksie/Workspace/heyfoxy.com/config/#database.mongo.yml#
+/Users/weeksie/Workspace/heyfoxy.com/config/initializers/mongomapper.rb
+/Users/weeksie/Workspace/heyfoxy.com/config/initializers/#mongomapper.rb#
+/Users/weeksie/Workspace/heyfoxy.com/app/controllers/sessions_controller.rb
+/Users/weeksie/Workspace/heyfoxy.com/app/controllers/#sessions_controller.rb#

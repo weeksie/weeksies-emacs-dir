@@ -6,12 +6,28 @@
 (defun open-preferences ()
   (interactive)
   (find-file "~/Library/Preferences/Aquamacs Emacs/Preferences.el"))
-(global-set-key "\C-p" 'open-preferences)
+(global-set-key "\C-xp" 'open-preferences)
 
+(set-background-color "#FEF1C6")
+;(set-default-font "ProggyTiny-11")
+(set-default-font "Inconsolata-14")
+;(set-default-font "Anonymous Pro-12")
+;(set-default-font "ProFontIsoLatin1-9")
+
+
+(setq inhibit-splash-screen t)
 (setq one-buffer-one-frame nil)
 (setq osx-key-mode nil)
+(setq mac-option-modifier nil)
+(setq make-backup-files nil)
+(setq backup-inhibited t)
+(setq auto-save-default nil)
 
 (add-to-list 'load-path "~/.emacs.d/")
+(add-to-list 'load-path "~/.emacs.d/cedet-1.1/common")
+(add-to-list 'load-path "~/.emacs.d/cedet-1.1/contrib")
+
+; (add-to-list 'load-path "~/.emacs.d/enhanced-ruby-mode/")
 (normal-top-level-add-to-load-path '("apel"))
 
 ;(load "path-util")
@@ -35,9 +51,13 @@
 (require 'ido)
 (ido-mode t)
 (setq ido-enable-flex-matching t)
-(process-adaptive-read-buffering t) ; uncomment if ido gets sluggish again
+;(process-adaptive-read-buffering t) ; uncomment if ido gets sluggish again
 
-
+;;; Revive mode
+(require 'revive)
+(autoload 'save-current-configuration "revive" "Save status" t)
+(autoload 'resume "revive" "Resume Emacs" t)
+(autoload 'wipe "revive" "Wipe Emacs" t)
 
 ;; ;;;; YASnippets
 ;; (add-to-list 'load-path "~/Library/Preferences/Aquamacs Emacs/yasnippet")
@@ -54,17 +74,23 @@
 (pair-mode)
 
 
-(tool-bar-mode -1)
-(split-window-vertically)
-(split-window-horizontally)
-(set-frame-position (selected-frame) 350 30)
-(set-frame-size (selected-frame) 205 75)
-(enlarge-window 20)
-(setq indent-tabs-mode nil)
+(require 'greedy-delete)
 
-(require 'linum)
-(setq linum-format "%d ")
-(global-linum-mode)
+(when window-system
+ (progn
+   (tool-bar-mode -1)
+   (split-window-vertically)
+   (split-window-horizontally)
+   (set-frame-position (selected-frame) 350 30)
+   (set-frame-size (selected-frame) 205 75)
+   (enlarge-window 20)))
+
+(setq indent-tabs-mode nil)
+(setq tab-width 2)
+;; (require 'linum)
+;; (setq linum-format "%d ")
+;; (global-linum-mode)
+
 
 ;;;;; AQUAMACS SPECIFIC SETTINGS
 (setq browse-url-browser-function 'browse-url-safari)
@@ -107,8 +133,27 @@
 		("\\.cmake$" . cmake-mode)) 
 	      auto-mode-alist))
 
+
+;;;; RUBY2SHOES FICTION MODE
+(add-to-list 'load-path "~/.emacs.d/ruby2shoes/user/emacs_modes")
+(autoload 'fiction-mode "fiction" nil t)
+(setq auto-mode-alist
+      (append '(("\\.fc$" . fiction-mode)) 
+	      auto-mode-alist))
+
+;;;; CUCUMBER/FEATURE MODE
+(autoload 'feature-mode "feature-mode" nil t)
+(setq auto-mode-alist
+      (append '(("\\.feature$" . feature-mode))
+	      auto-mode-alist))
+
 ;;;; LATEX MODE
-(autoload 'latex-mode "latex" nil t)
+(autoload 'latex-mode "auctex" nil t)
+
+(setq auto-mode-alist
+      (append '(("\\.tex$" . latex-mode))
+	      auto-mode-alist))
+
 (defun latex-para ()
   (interactive)
   (progn
@@ -124,7 +169,7 @@
 					  (file-name-sans-extension (expand-file-name (buffer-name)))))))
 				;	(pdflatex (concat "pdflatex " (expand-file-name (buffer-name)))))    
     (progn
-      (shell-command (concat "xelatex  \"" fname ".tex\""))
+      (shell-command (concat "/usr/texbin/xelatex  \"" fname ".tex\""))
       ; run second time to generate any TOC data
       ;(shell-command pdflatex)
       (shell-command (concat "open \"" fname ".pdf\""))
@@ -149,9 +194,11 @@
 ;(define-key LaTeX-mode-map " " 'latex-insert-full-stop)
 (add-hook 'LaTeX-mode-hook
 	  '(lambda ()
-	    (flyspell-mode)
+	    (flyspell-mode)	    
+	    (set-fill-column 80)
+	    (longlines-mode)
 	    (put 'LaTeX-mode 'flyspell-mode-predicate 'tex-mode-flyspell)
-	    (define-key LaTeX-mode-map (kbd "C-<return>") 'latex-para)
+	    (define-key LaTeX-mode-map (kbd "C-<return>") 'LaTeX-para)
 	    (define-key LaTeX-mode-map "\C-c\C-c" 'latex-compile-and-load)
 	    (define-key LaTeX-mode-map "\M-o" 'latex-insert-circumflect-o)))
 
@@ -203,7 +250,7 @@
 (require 'go-mode-load)
 
 ;;;;C MODE
-(autoload 'cc-mode "cc-mode" nil t)
+(autoload 'cc-mode "c-mode" nil t)
 
 (defun c-compile-current-buffer ()
   (interactive)
@@ -301,11 +348,13 @@
 (autoload 'ruby-mode "ruby-mode" nil t)
 (autoload 'inf-ruby "ruby-mode" nil t)
 (setq ri-ruby-script "~/Library/Preferences/Aquamacs Emacs/ri-emacs.rb")
+(setq enh-ruby-program "~/.rvm/rubies/ruby-1.9.2-p136/bin/ruby")
 (autoload 'ri "~/Library/Preferences/Aquamacs Emacs/ri-ruby.el" nil t)
 
 (add-hook 'ruby-mode-user-hook 'turn-on-font-lock)
 (add-hook 'ruby-mode-hook 'pair-mode)
-(add-hook 'ruby-mode-hook 'yas/minor-mode-on)
+(add-hook 'ruby-mode-hook (lambda () (subword-mode 1)))
+;(add-hook 'ruby-mode-hook 'yas/minor-mode-on)
 
 (defun ruby-eval-buffer () (interactive)
    "Evaluate the buffer with ruby."
@@ -315,7 +364,7 @@
   (interactive "P")
   (self-insert-command (prefix-numeric-value arg))
   (save-excursion
-    (cond ((is-alone-on-line "\\(def\\|if\\|class\\)")
+    (cond ((is-alone-on-line "\\(def\\|if\\|class\\|module\\)")
          (progn
            (ruby-indent-line t)
            (newline)
@@ -346,6 +395,10 @@
    "export PATH=$PATH:/usr/local/bin;cd /Users/weeksie/workspace/twelvestone/src/server;rake install"))
 
 
+(defun ruby-align-hash (begin end)
+  "Aligns ruby symbol-keyed hashes"
+  (interactive "r")
+  (align-regexp begin end "\\(\\s-*\\)[a-z_]+:" 1 1))
 
 (autoload 'run-ruby "/usr/local/bin/ruby")
 
@@ -360,25 +413,27 @@
 
 (setq auto-mode-alist
       (append '(("\\.rake$" . ruby-mode)) auto-mode-alist))
+(setq auto-mode-alist
+      (append '(("\\.task$" . ruby-mode)) auto-mode-alist))
+
+(setq auto-mode-alist
+      (append '(("\\.gemspec$" . ruby-mode)) auto-mode-alist))
+
+(setq auto-mode-alist
+      (append '(("\\.god$" . ruby-mode)) auto-mode-alist))
 
 (setq interpreter-mode-alist (append '(("ruby" . ruby-mode))
 				     interpreter-mode-alist))
  
 (add-hook 'ruby-mode-hook (lambda () 
 			    (progn			 
+			      (gd-add-to-mode)
 			      (define-key ruby-mode-map "\C-c\C-c" 'ruby-eval-buffer)
+			      (define-key ruby-mode-map "\C-xrh" 'ruby-align-hash)
 			      (define-key ruby-mode-map " " 'ruby-electric-space)
-			      (define-key ruby-mode-map "\r" 'ruby-electric-ret)
-			      (define-key ruby-mode-map "\C-c\C-w" 'ruby-deploy-server))))
+			      (define-key ruby-mode-map "\r" 'ruby-electric-ret))))
 ;; (define-key ruby-mode-map [C-up] 'ruby-backward-sexp)
 ;; (define-key ruby-mode-map [C-down] 'ruby-forward-sexp)
-
-
-;; RINARI (Rails mode)
-;; (add-to-list 'load-path "~/Library/Preferences/Aquamacs Emacs/rinari")
-;; (add-to-list 'load-path "~/Library/Preferences/Aquamacs Emacs/rinari/jump")
-;; (require 'rinari)
-;; (define-key rinari-minor-mode-map "\C-c\C-t" 'rinari-test)
 
 
 ;; CUCUMBER (testing)
@@ -400,6 +455,7 @@
 (add-hook 'textile-mode-hook (lambda ()
 			       (progn 
 				 (flyspell-mode)	
+				 (longlines-mode)
 				 (define-key textile-mode-map "\C-c\C-c" 'blog-preview))))			 
 
 ;;;; MARKDOWN
@@ -535,7 +591,7 @@
       (append '(("\\.lua$" . lua-mode)) auto-mode-alist))
 
 (add-hook 'lua-mode-hook 'pair-mode)
-(add-hook 'lua-mode-hook 'yas/minor-mode-on)
+;(add-hook 'lua-mode-hook 'yas/minor-mode-on)
 
 ;; returns the name of the directory just above the current directory
 ;; e.g. /dir1/dir2/file.ext -> dir1
@@ -590,42 +646,125 @@
 (setq interpreter-mode-alist (append '(("lua" . lua-mode))
     				     interpreter-mode-alist))
 
+
+(require 'coffee-mode)
+(setq auto-mode-alist
+      (append '(("\\.coffee" . coffee-mode)) auto-mode-alist))
+
 ;; ;;;;XUL/Javascript
 (autoload 'js2-mode "js2" nil t)
+(autoload 'espresso-mode "espresso")
 
 (setq auto-mode-alist
       (append '(("\\.js$" . js2-mode)) auto-mode-alist))
+(setq auto-mode-alist
+      (append '(("Nodefile" . js2-mode)) auto-mode-alist))
+
+(add-to-list 'auto-mode-alist '("\\.json$" . js2-mode))
+
+(defadvice js2-reparse (before json)
+  (setq js2-buffer-file-name buffer-file-name))
+
+(ad-activate 'js2-reparse)
+
+(defadvice js2-parse-statement (around json)
+  (if (and (= tt js2-LC)
+	   js2-buffer-file-name
+	   (string-equal (substring js2-buffer-file-name -5) ".json")
+	   (eq (+ (save-excursion
+		    (goto-char (point-min))
+		    (back-to-indentation)
+		    (while (eolp)
+		      (next-line)
+		      (back-to-indentation))
+		    (point)) 1) js2-ts-cursor))
+      (setq ad-return-value (js2-parse-assign-expr))
+    ad-do-it))
+
+(ad-activate 'js2-parse-statement)
 
 
 (setq js2-bounce-indent-p nil)
 
-;; ;; (add-hook 'javascript-mode-hook
-;; ;;           '(lambda () 
-;; ;; 	     (setq hilit-mode-enable-list  '(not text-mode)
-;; ;; 		   hilit-background-mode   'light
-;; ;; 		   hilit-inhibit-hooks     nil
-;; ;; 		   hilit-inhibit-rebinding nil)
-;; ;; 	     (require 'hilit19)))
+(defun my-js2-indent-function ()
+  (interactive)
+  (save-restriction
+    (widen)
+    (let* ((inhibit-point-motion-hooks t)
+           (parse-status (save-excursion (syntax-ppss (point-at-bol))))
+           (offset (- (current-column) (current-indentation)))
+           (indentation (espresso--proper-indentation parse-status))
+           node)
 
-;; (defun js-emit-load-fun ()
-;;   (interactive)
-;;   (indent-according-to-mode)
-;;   (princ "load_" (current-buffer))
-;;   (save-excursion
-;;     (princ ": function(widget) {" (current-buffer))
-;;     (newline 2)
-;;     (princ "}" (current-buffer)))
-;;   (save-excursion
-;;     (next-line)
-;;     (indent-according-to-mode)
-;;     (next-line)
-;;     (indent-according-to-mode)))
-    
+      (save-excursion
+
+        ;; I like to indent case and labels to half of the tab width
+        (back-to-indentation)
+        (if (looking-at "case\\s-")
+            (setq indentation (+ indentation (/ espresso-indent-level 2))))
+
+        ;; consecutive declarations in a var statement are nice if
+        ;; properly aligned, i.e:
+        ;;
+        ;; var foo = "bar",
+        ;;     bar = "foo";
+        (setq node (js2-node-at-point))
+        (when (and node
+                   (= js2-NAME (js2-node-type node))
+                   (= js2-VAR (js2-node-type (js2-node-parent node))))
+          (setq indentation (+ 4 indentation))))
+
+      (indent-line-to indentation)
+      (when (> offset 0) (forward-char offset)))))
+
+(defun my-js2-mode-hook ()
+  (require 'espresso)
+  (setq espresso-indent-level 2
+        indent-tabs-mode nil
+        c-basic-offset 2)
+  (c-toggle-auto-state 0)
+  (c-toggle-hungry-state 1)
+  (set (make-local-variable 'indent-line-function) 'my-js2-indent-function)
+  (define-key js2-mode-map [(meta control |)] 'cperl-lineup)
+  (define-key js2-mode-map [(meta control \;)] 
+    '(lambda()
+       (interactive)
+       (insert "/* -----[ ")
+       (save-excursion
+         (insert " ]----- */"))
+       ))
+  (define-key js2-mode-map [(return)] 'newline-and-indent)
+  (define-key js2-mode-map [(backspace)] 'c-electric-backspace)
+  (define-key js2-mode-map [(control d)] 'c-electric-delete-forward)
+  (define-key js2-mode-map [(control meta q)] 'my-indent-sexp)
+  (set-variable 'tab-width 2)
+  (if (featurep 'js2-highlight-vars)
+    (js2-highlight-vars-mode))
+  (message "My JS2 hook"))
 
 
-;; (define-key javascript-mode-map "\C-l\C-l" 'js-emit-load-fun)
+(add-hook 'js2-mode-hook 'my-js2-mode-hook)
+;(add-hook 'js2-mode-hook 'js2-kill-those-fucking-comments)
 
 
+;;;; UGH JAVA (android and such)
+(autoload 'android-mode "android-mode" nil t)
+
+;; (setq auto-mode-alist
+;;       (append '(("\\.java" . cedet-mode)) auto-mode-alist))
+
+(add-hook 'android-mode-hook
+	  (lambda()
+	    (require 'android)
+	    (setq android-mode-sdk-dir "/android-sdk-macosx")))
+
+;; (add-to-list 'load-path "~/emacs/android-mode")
+;; 	    (require 'android-mode)
+;; 	    (setq android-mode-sdk-dir "~/work/android/android")
+;; 	    (add-hook 'gud-mode-hook
+;;             (lambda ()
+;;             (add-to-list 'gud-jdb-classpath "/home/gregj/work/android-sdk-linux_86/platforms/android-7/android.jar")
+;;             ))
 
 ;;;; SGML/XML/HTML/RHTML MODE
 (autoload 'sgml-mode "sgml-mode" nil t)
@@ -638,7 +777,7 @@
 (setq auto-mode-alist
       (append '(("\\.erb" . sgml)) auto-mode-alist))
 (setq auto-mode-alist
-      (append '(("\\.liquid$" . sgml)) auto-mode-alist))
+      (append '(("\\.plist$" . sgml)) auto-mode-alist))
 
 
 (add-hook 'sgml-mode-hook
@@ -748,6 +887,7 @@
 			      (define-key sgml-mode-map (kbd "C-c m") 'sgml-php-msg))))
 
 
+
 (add-to-list 'load-path "~/Library/Preferences/Aquamacs Emacs/mmm-mode")
 (require 'mmm-mode)
 (require 'mmm-auto)
@@ -756,6 +896,7 @@
 (setq cssm-indent-function #'cssm-c-style-indenter)
 (setq cssm-indent-level '2)
 (setq mmm-global-mode 'maybe)
+
 
 (mmm-add-classes
  '((erb-code
@@ -769,6 +910,17 @@
              (?# erb-comment    nil @ "<%#" @ " " _ " " @ "%>" @)
              (?= erb-expression nil @ "<%=" @ " " _ " " @ "%>" @))
     )))
+
+(mmm-add-classes
+ '((erb-code
+    :submode php-mode
+    :match-face (("<\\? //" . mmm-comment-submode-face)
+                 ("<\\?=" . mmm-output-submode-face)
+                 ("<\\?"  . mmm-code-submode-face))
+    :front "<\\?[#=]?" 
+    :back "\\?>" 
+    )))
+
 (add-hook 'html-mode-hook
           '(lambda ()
 	     (setq mmm-classes '(erb-code))
@@ -781,6 +933,7 @@
 (add-to-list 'auto-mode-alist '("\\.html?\\'" . html-mode))
 (add-to-list 'auto-mode-alist '("\\.jsp\\'" . html-mode))
 (add-to-list 'auto-mode-alist '("\\.erb\\'" . html-mode))
+(add-to-list 'auto-mode-alist '("\\.php\\'" . html-mode))
 
 ;;
 ;; What features should be turned on in this html-mode?
@@ -790,14 +943,57 @@
 (setq mmm-submode-decoration-level 1)
 
 
+;; JADE
+
+(autoload 'sws-mode "sws-mode" nil t)
+(autoload 'jade-mode "jade-mode" nil t)
+(add-to-list 'auto-mode-alist '("\\.jade" . jade-mode))
+(add-hook 'jade-mode-hook (lambda ()
+			    (setq indent-tabs-mode nil)))
+
+
+;; LESS CSS
+(autoload 'less-mode "less-css-mode" nil t)
+(add-to-list 'auto-mode-alist '("\\.less" . less-mode))
+
 ;; HAML / SASS
+(autoload 'scss-mode "scss-mode" nil t)
+(add-to-list 'auto-mode-alist '("\\.scss" . scss-mode))
+(add-hook 'scss-mode-hook 
+	  (lambda ()
+	    (setq scss-indent-level '2)
+	    (setq scss-compile-at-save nil)))
 
 (defun haml-indent-region()
   (interactive)
   (haml-reindent-region-by 1))
    
+
 (autoload 'haml-mode "haml-mode" nil t)
 (autoload 'sass-mode "sass-mode" nil t)
+
+;; (add-hook 'haml-mode-hook
+;; 	  (lambda()
+;; 	    (if (string-match "indaba" (buffer-file-name))
+;; 		(progn
+;; 		  (make-local-variable 'haml-indent-offset)
+;; 		  (setq haml-indent-offset 4)))))
+
+(add-hook 'haml-mode-hook 
+	  (lambda ()
+	    (modify-syntax-entry ?< "/" haml-mode-syntax-table)
+	    (modify-syntax-entry ?_ "-" haml-mode-syntax-table)
+	    (modify-syntax-entry ?- "-" haml-mode-syntax-table)))
+	  
+
+(add-to-list 'auto-mode-alist '("\\.sass\\'" . sass-mode))
+(add-to-list 'auto-mode-alist '("\\.haml\\'" . haml-mode))
+
+
+;; HTMLIZE
+
+(autoload 'htmlize "htmlize" nil t)
+
 ;; Blogging
 
 (defun post-to-blog ()
@@ -893,44 +1089,44 @@
       (backward-char)
       (kill-line))))
 
-(defun snepo-electric-brace () 
+(defun scotty-electric-brace () 
   (interactive)
-  (snepo-surround "{" "}"))
+  (scotty-surround "{" "}"))
 
-(defun snepo-electric-close-brace ()
+(defun scotty-electric-close-brace ()
   (interactive)
-  (snepo-check-and-close "}"))
+  (scotty-check-and-close "}"))
 
-(defun snepo-electric-bracket () 
+(defun scotty-electric-bracket () 
   (interactive)
-  (snepo-surround "[" "]"))
+  (scotty-surround "[" "]"))
 
-(defun snepo-electric-close-bracket ()
+(defun scotty-electric-close-bracket ()
   (interactive)
-  (snepo-check-and-close "]"))
+  (scotty-check-and-close "]"))
 
-(defun snepo-electric-paren () 
+(defun scotty-electric-paren () 
   (interactive)
-  (snepo-surround "(" ")"))
+  (scotty-surround "(" ")"))
 
-(defun snepo-electric-close-paren ()
+(defun scotty-electric-close-paren ()
   (interactive)
-  (snepo-check-and-close ")"))
+  (scotty-check-and-close ")"))
 
-(defun snepo-electric-quote () 
+(defun scotty-electric-quote () 
   (interactive)
   (if (looking-at "\"") 
       (forward-char 1) 
     (progn
-      (snepo-surround "\"" "\""))))
+      (scotty-surround "\"" "\""))))
 
-(defun snepo-electric-delete ()
+(defun scotty-electric-delete ()
   (interactive)
   (if (or
-       (snepo-between "\\[" "\\]")
-       (snepo-between "{" "}")
-       (snepo-between "(" ")")
-       (snepo-between "\"" "\""))
+       (scotty-between "\\[" "\\]")
+       (scotty-between "{" "}")
+       (scotty-between "(" ")")
+       (scotty-between "\"" "\""))
 	(progn
 	  (forward-char 1)
 	  (delete-char -2))
@@ -938,14 +1134,14 @@
 
 
 
-(defmacro snepo-surround-with-function (left right)   
+(defmacro scotty-surround-with-function (left right)   
   "Returns a function which, when called, will interactively
 wrap-region-or-insert using left and right."
   `(lambda () 
      (interactive) 
-     (snepo-surround ,left ,right)))
+     (scotty-surround ,left ,right)))
 
-(defun snepo-surround (x y)
+(defun scotty-surround (x y)
   (interactive)
   (if (and mark-active transient-mark-mode)
       (progn
@@ -962,14 +1158,16 @@ wrap-region-or-insert using left and right."
     (unless (or (looking-at y) (looking-at "\\w"))
       (save-excursion (princ y (current-buffer))))))
 
-(defun snepo-between (x y)
+(defun scotty-between (x y)
   (and (char-is-at -1 x)
        (looking-at y)))
 	    
-(defun snepo-check-and-close (x)
+(defun scotty-check-and-close (x)
   (if (looking-at x)
       (forward-char 1)
     (princ x (current-buffer))))
+
+
 
 (defun rename-file-and-buffer (new-name)
   "Renames both current buffer and file it's visiting to NEW-NAME." 
@@ -1004,7 +1202,10 @@ wrap-region-or-insert using left and right."
        (set-visited-file-name newname)
        (set-buffer-modified-p nil) t))))
 
-
+(defun word-count nil 
+  "Count words in buffer" 
+  (interactive)
+  (shell-command-on-region (point-min) (point-max) "wc -w"))
 
 (global-set-key [M-up] 'kill-yank-up)
 (global-set-key [M-down] 'kill-yank-down)
@@ -1051,8 +1252,8 @@ LIST defaults to all existing live buffers."
   (delete-other-windows))
 
 ;; for aquamacs
-(define-key osx-key-mode-map [M-up] 'kill-yank-up)
-(define-key osx-key-mode-map [M-down] 'kill-yank-down)
+;(define-key osx-key-mode-map [M-up] 'kill-yank-up)
+;(define-key osx-key-mode-map [M-down] 'kill-yank-down)
 
 (global-set-key [C-M-up] 'copy-yank-up)
 (global-set-key [C-M-down] 'copy-yank-down)
@@ -1087,8 +1288,10 @@ LIST defaults to all existing live buffers."
 
 ; keeps me from minimising the fucking window on
 ; accident all the time.
-(global-set-key "\C-z" 'save-buffer)
-(global-set-key "\C-x\C-z" 'save-buffer)
+(when window-system 
+  (progn 
+    (global-set-key "\C-z" 'save-buffer)
+    (global-set-key "\C-x\C-z" 'save-buffer)))
 
 (global-set-key "\M- " 'dabbrev-expand)
 
@@ -1108,25 +1311,25 @@ LIST defaults to all existing live buffers."
 
 
 ;; pair mode does this, y'know
-;; (global-set-key "[" 'snepo-electric-bracket)
-;; (global-set-key "]" 'snepo-electric-close-bracket)
-;; (global-set-key "{" 'snepo-electric-brace)
-;; (global-set-key "}" 'snepo-electric-close-brace)
-;; (global-set-key "(" 'snepo-electric-paren)
-;; (global-set-key ")" 'snepo-electric-close-paren)
-(global-set-key "\"" 'snepo-electric-quote)
-;; ;(global-set-key "'" 'snepo-electric-prime)
-;; (global-set-key [backspace] 'snepo-electric-delete)
+;; (global-set-key "[" 'scotty-electric-bracket)
+;; (global-set-key "]" 'scotty-electric-close-bracket)
+;; (global-set-key "{" 'scotty-electric-brace)
+;; (global-set-key "}" 'scotty-electric-close-brace)
+;; (global-set-key "(" 'scotty-electric-paren)
+;; (global-set-key ")" 'scotty-electric-close-paren)
+(global-set-key "\"" 'scotty-electric-quote)
+;; ;(global-set-key "'" 'scotty-electric-prime)
+;; (global-set-key [backspace] 'scotty-electric-delete)
 
 
 ;;;; temp functions
 
-(defun snepo-document-template () 
+(defun scotty-document-template () 
   (interactive)
   (save-excursion 
     (princ "
 \\documentclass{report}
-\\usepackage{snepoproposal}
+\\usepackage{scottyproposal}
 \\begin{document}
 \\setlength{\\headsep}{16pt}
 \\chead{}\\title{}
@@ -1139,10 +1342,40 @@ LIST defaults to all existing live buffers."
 " (current-buffer))))
 
 
-(defun snepo-itemize (number label)
+(defun scotty-itemize (number label)
   (interactive "MItem Number: \nMItem Label: ")
   (princ (concat 
 	  "\\item[(" number ")] \\textbf{" label "} ")
 	 (current-buffer)))
 
 
+
+(custom-set-variables
+  ;; custom-set-variables was added by Custom.
+  ;; If you edit it by hand, you could mess it up, so be careful.
+  ;; Your init file should contain only one such instance.
+  ;; If there is more than one, they won't work right.
+ '(global-pair-mode t)
+ '(js2-basic-offset 2)
+ '(js2-enter-indents-newline t)
+ '(js2-indent-on-enter-key nil)
+ '(js2-mode-escape-quotes nil)
+ '(nil nil t)
+ '(pair-mode-chars (quote (40 91 123 171)))
+ '(safe-local-variable-values (quote ((encoding . utf-8)))))
+(custom-set-faces
+  ;; custom-set-faces was added by Custom.
+  ;; If you edit it by hand, you could mess it up, so be careful.
+  ;; Your init file should contain only one such instance.
+  ;; If there is more than one, they won't work right.
+ )
+
+; scratch
+
+(defun plyfe-replace ()
+  (interactive)
+  (progn
+    (replace-string "Plyfe.Templates.get(" "JST[")
+    (point-min)
+    (replace-string "_template\")" "\"]")))
+  

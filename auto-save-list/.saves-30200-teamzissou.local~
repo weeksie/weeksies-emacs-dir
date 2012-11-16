@@ -1,0 +1,4 @@
+/usr/local/nginx/conf/nginx.conf
+/usr/local/nginx/conf/#nginx.conf#
+/usr/local/nginx/conf/phrase.txt
+/usr/local/nginx/conf/#phrase.txt#
